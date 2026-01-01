@@ -11,14 +11,14 @@ email_service = EmailService()
 # --------------------------------------------------------------------------------------------
 
 @router.post("/subscribe", responses={
-    200: {"description": "Correo enviado exitosamente."},
+    200: {"description": "Usuario suscrito exitosamente para recibir alertas de juegos gratis."},
     500: {"description": "Error interno del servidor."}
 })
 async def subscribe(email: str):
     return await email_service.subscribe(email)
 
 @router.post("/unsubscribe", responses={
-    200: {"description": "Correo enviado exitosamente."},
+    200: {"description": "Suscripción cancelada exitosamente."},
     500: {"description": "Error interno del servidor."}
 })
 async def unsubscribe(email: str):
@@ -26,9 +26,8 @@ async def unsubscribe(email: str):
 
 
 @router.post("/send-email", responses={
-    200: {"description": "Correo enviado exitosamente."},
+    200: {"description": "Correo de alerta con las ofertas enviado exitosamente."},
     500: {"description": "Error interno del servidor."}
 })
 async def send_email(email: str):
     return await email_service.send_email(email)
-
