@@ -1,38 +1,40 @@
-import json
 from typing import Optional
-from fastapi import HTTPException
-#from datetime import datetime
-
-#from api.services.database_service import *
-#from api.services.exchanges_service import *
-#from api.schemas.book_schema import BookCreate, BookUpdate, LocalCurrency
-#from api.models.book import Book
-#from api.utils.response_wrapper import *
-#from api.utils.constants import Constants
+from api.core.errors.base_exceptions import ExternalAPIError, DatabaseError
+from api.core.config.config import Config
 from api.core.wrapper.response_wrapper import api_response
 from api.core.request_manager.http_client import HttpClient
 from api.services.deals_service.deals_routes import DealsRoutes
-from api.services.database_service import DatabaseService
+from api.repositories.database_service import DatabaseService
 
 class DealService:
 
-    def __init__(self):
-        self._client = HttpClient()
+    def __init__(self, http_client: HttpClient, db_service: DatabaseService):
+        self._client = http_client
         self._route = DealsRoutes()
-        self._db = DatabaseService()
+        self._db = db_service
+        self._api_key = Config.API_KEY
 
+    async def get_db_deals(self):
+        """Recupera las ofertas almacenadas en la base de datos local."""
+        try:
+            deals = self._db.get_all_deals()
+            if len(deals) == 0:
+                return api_response(data={"list": []}, message="No hay ofertas en la base de datos")
+            return api_response(data={"list": deals})
+        except Exception as e:
+            raise DatabaseError(f"Error al leer la base de datos: {str(e)}")
+        
     async def get_deals(self, freeOnly: Optional[bool] = True):
         try:
-            #code = await self.api_call.get(url='https://api.isthereanydeal.com/deals/v2/c8a1627742822489318a8a275cbf265973cdc64a') #, headers='c8a1627742822489318a8a275cbf265973cdc64a'
             params = {
-                "key": 'c8a1627742822489318a8a275cbf265973cdc64a',
+                "key": self._api_key,
                 "shops": "61, 16",  # 61 es el ID de Steam
                 "sort": "price", # Las más recientes primero
                 "limit": 10      # Traer suficientes para filtrar
             }
             code = await self._client.get(url=self._route.GET_DEALS, params=params)
             if not code:
-                raise HTTPException(status_code=404, detail="No se encontraron ofertas.")
+                raise ExternalAPIError("La API externa no devolvió resultados.")
 
             # Verificamos si el último es gratis para traer más páginas si es necesario
             if len(code) == 10:
@@ -45,40 +47,27 @@ class DealService:
                     self._db.save_free_deals(code["list"])
 
             return api_response(data=code)
-        except HTTPException as http_exc:
-            raise http_exc
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise ExternalAPIError(f"Fallo en la comunicación con el proveedor: {str(e)}")
     
     async def get_updated_deals(self):
         try:
-            #code = await self.api_call.get(url='https://api.isthereanydeal.com/deals/v2/c8a1627742822489318a8a275cbf265973cdc64a') #, headers='c8a1627742822489318a8a275cbf265973cdc64a'
             params = {
-                "key": 'c8a1627742822489318a8a275cbf265973cdc64a',
+                "key": self._api_key,
                 "shops": "61, 16",  # 61 es el ID de Steam
                 "sort": "price", # Las más recientes primero
                 "limit": 10      # Traer suficientes para filtrar
             }
             code = await self._client.get(url=self._route.GET_DEALS, params=params)
             if not code:
-                raise HTTPException(status_code=404, detail="No se encontraron ofertas.")
+                raise ExternalAPIError("No se pudieron obtener actualizaciones.")
 
             # Verificamos si el último es gratis para traer más páginas si es necesario
             code = await self._paginate_if_last_is_free(code, params)
 
             return api_response(data=code)
-        except HTTPException as http_exc:
-            raise http_exc
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-    async def get_db_deals(self):
-        """Recupera las ofertas almacenadas en la base de datos local."""
-        try:
-            deals = self._db.get_all_deals()
-            return api_response(data={"list": deals})
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise ExternalAPIError(f"Error durante la actualización: {str(e)}")
 
     def _filter_free_deals(self, data: dict) -> dict:
         """Filtra el JSON original para retornar solo los juegos con precio 0."""
