@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 try:
-    from api.controller.deals_controller import router as deals_controller
-    from api.controller.email_controller import router as email_controller
+    from api.routes.deals_controller import router as deals_controller
+    from api.routes.email_controller import router as email_controller
 
     app = FastAPI(title="videogames-deals-api")
     app.include_router(deals_controller)
