@@ -42,9 +42,6 @@ class DealService:
 
             if freeOnly:
                 code = self._filter_free_deals(code)
-                # Guardamos en la base de datos los juegos filtrados
-                if code.get("list"):
-                    self._db.save_free_deals(code["list"])
 
             return api_response(data=code)
         except Exception as e:
@@ -64,6 +61,11 @@ class DealService:
 
             # Verificamos si el último es gratis para traer más páginas si es necesario
             code = await self._paginate_if_last_is_free(code, params)
+
+            code = self._filter_free_deals(code)
+            # Guardamos en la base de datos los juegos filtrados
+            if code.get("list"):
+                self._db.save_free_deals(code["list"])
 
             return api_response(data=code)
         except Exception as e:
