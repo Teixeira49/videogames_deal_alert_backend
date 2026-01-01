@@ -51,7 +51,7 @@ Crea un archivo .env en la raíz del proyecto y añade tus credenciales
 Nota: Recuerda para esta parte solicitar a la api de IsThereAnyDeal tu clave secreta (link: https://docs.isthereanydeal.com)
 
 ---
-⚡️ Ejecutar proyecto
+## ⚡️ Ejecutar proyecto
 
 ```
 uvicorn main:app --reload
