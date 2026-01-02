@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from api.utils.html import root_html
+from api.utils.html.root_html import root_html
 import traceback
 from dotenv import load_dotenv
 
