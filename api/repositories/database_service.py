@@ -1,6 +1,7 @@
 import sqlite3
 import json
 from typing import List, Dict
+from api.schemas.user import User
 
 class DatabaseService:
     def __init__(self, db_name="deals.db"):
@@ -25,6 +26,20 @@ class DatabaseService:
                 expiry_date TEXT,
                 platforms TEXT,
                 type TEXT,
+                is_deleted BOOLEAN DEFAULT 0
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                first_name TEXT,
+                last_name TEXT,
+                email TEXT UNIQUE,
+                birth_date TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_active BOOLEAN DEFAULT 1,
                 is_deleted BOOLEAN DEFAULT 0
             )
         ''')
@@ -89,6 +104,29 @@ class DatabaseService:
 
         conn.commit()
         conn.close()
+
+    def add_user(self, user: User):
+        """Agrega un nuevo usuario a la base de datos."""
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+        
+        try:
+            # Verificar si el correo ya existe antes de insertar
+            cursor.execute('SELECT id FROM users WHERE email = ?', (user.email,))
+            if cursor.fetchone():
+                return None
+
+            cursor.execute('''
+                INSERT INTO users (first_name, last_name, email, birth_date)
+                VALUES (?, ?, ?, ?)
+            ''', (user.first_name.capitalize(), user.last_name.capitalize(), user.email.lower(), user.birth_date))
+            conn.commit()
+            return cursor.lastrowid
+        except sqlite3.IntegrityError:
+            # El correo ya existe o hubo un error de integridad
+            return None
+        finally:
+            conn.close()
 
     def get_all_deals(self) -> List[Dict]:
         """Obtiene todos los deals almacenados que no estén marcados como eliminados."""

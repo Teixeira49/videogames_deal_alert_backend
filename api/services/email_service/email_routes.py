@@ -1,10 +1,10 @@
-import os
+from api.core.config.config import Config as conf
 
 class EmailRoutes:
 
-    BASE_ROUTE = os.getenv("SITE_URL")
+    BASE_ROUTE = conf.BASE_URL
 
-    GET_EMAILS = f"{BASE_ROUTE}/view"
+    #GET_EMAILS = f"{BASE_ROUTE}/view"
 
     SUSCRIBE_EMAIL = f"{BASE_ROUTE}/subscribe"
 
