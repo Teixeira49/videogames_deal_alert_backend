@@ -1,5 +1,5 @@
 from fastapi.responses import JSONResponse
-from utils.constants import Constants as c
+from api.utils.constants.constants import Constants as c
 
 def api_response(data=None, detail=c.STATUS_OK_MSG, message=c.STATUS_OK_DEATILS, status_code=c.STATUS_OK):
     content={

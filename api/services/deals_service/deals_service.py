@@ -36,12 +36,16 @@ class DealService:
             if not code:
                 raise ExternalAPIError("La API externa no devolvió resultados.")
 
-            # Verificamos si el último es gratis para traer más páginas si es necesario
-            if len(code) == 10:
+            if len(code.get("list", [])) == 10:
                 code = await self._paginate_if_last_is_free(code, params)
 
+            # Sincronización automática: Guardamos/Actualizamos en DB al recorrer la lista
+            free_deals = self._filter_free_deals(code)
+            if free_deals.get("list"):
+                self._db.save_free_deals(free_deals["list"])
+
             if freeOnly:
-                code = self._filter_free_deals(code)
+                return api_response(data=free_deals)
 
             return api_response(data=code)
         except Exception as e:
