@@ -1,9 +1,15 @@
 from api.services.email_service.email_routes import EmailRoutes
 from api.core.request_manager.http_client import HttpClient
-from api.core.errors.base_exceptions import ExternalAPIError, DatabaseError
+from api.core.config.config import Config as conf
+from api.core.errors.base_exceptions import DatabaseError
 from api.schemas.user import User
 from api.repositories.database_service import DatabaseService
 from api.core.wrapper.response_wrapper import api_response
+from api.utils.html.game_html import create_deals_email_body
+
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 class EmailService:
 
@@ -45,4 +51,38 @@ class EmailService:
             raise DatabaseError(f"Error al registrar en base de datos: {str(e)}")
 
     async def send_email(self):
-        pass
+        users = self._db.get_active_users()
+        deals = self._db.get_all_deals()
+
+        body = create_deals_email_body(deals)
+        
+        for i in users:
+            self.send_email_for_user(i, 'Nuevos juegos gratuitos por tiempo limitado', body)
+
+    async def send_individual_email(self, target):
+        deals = self._db.get_all_deals()
+        body = create_deals_email_body(deals)
+        return self.send_email_for_user(target, 'Nuevos juegos gratuitos por tiempo limitado', body)
+        
+    def send_email_for_user(self, target, subject, body_msg):
+        """Envía un solo correo usando SMTP"""
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = conf.EMAIL_SENDER
+            msg['To'] = target
+            msg['Subject'] = subject
+
+            msg.attach(MIMEText(body_msg, 'html'))
+
+            print(body_msg)
+
+            server = smtplib.SMTP(conf.SMTP_SERVER, conf.SMTP_PORT)
+            server.starttls() # Encriptar conexión
+            server.login(conf.EMAIL_SENDER, conf.EMAIL_PASSWORD)
+            server.send_message(msg)
+            server.quit()
+            print(f"✅ Enviado a: {target}")
+            return api_response(message=f"✅ Enviado a: {target}")
+        except Exception as e:
+            print(f"❌ Error enviando a {target}: {e}")
+            return api_response(message=f"❌ Error enviando a {target}: {e}", status_code=400, detail='ERROR')

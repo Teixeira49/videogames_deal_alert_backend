@@ -146,6 +146,16 @@ class DatabaseService:
         conn.close()
         return row_count > 0
 
+    def get_active_users(self) -> List[Dict]:
+        """Obtiene todos los usuarios activos."""
+        conn = sqlite3.connect(self.db_name)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM users WHERE is_active = 1 AND is_deleted = 0')
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
     def get_all_deals(self) -> List[Dict]:
         """Obtiene todos los deals almacenados que no estén marcados como eliminados."""
         conn = sqlite3.connect(self.db_name)
