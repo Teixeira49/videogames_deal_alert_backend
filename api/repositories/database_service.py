@@ -128,6 +128,24 @@ class DatabaseService:
         finally:
             conn.close()
 
+    def disable_user(self, user_id: int):
+        """Deshabilita un usuario por su ID."""
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+        row_count = cursor.execute('UPDATE users SET is_active = 0 WHERE id = ?', (user_id,)).rowcount
+        conn.commit()        
+        conn.close()        
+        return row_count > 0
+
+    def enable_user(self, user_id: int):
+        """Habilita un usuario por su ID."""
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+        row_count = cursor.execute('UPDATE users SET is_active = 1 WHERE id = ?', (user_id,)).rowcount
+        conn.commit()
+        conn.close()
+        return row_count > 0
+
     def get_all_deals(self) -> List[Dict]:
         """Obtiene todos los deals almacenados que no estén marcados como eliminados."""
         conn = sqlite3.connect(self.db_name)

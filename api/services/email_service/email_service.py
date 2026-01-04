@@ -15,7 +15,7 @@ class EmailService:
     async def get_emails(self):
         pass
 
-    async def suscribe_email(self, user: User):
+    async def subscribe_email(self, user: User):
         """Registra un nuevo usuario en la base de datos para suscripción."""
         try:
             register = self._db.add_user(user)
@@ -25,8 +25,24 @@ class EmailService:
         except Exception as e:
             raise DatabaseError(f"Error al registrar en base de datos: {str(e)}")
 
-    async def unsuscribe_email(self):
-        pass
+    async def disable_subscription(self, userId):
+        try:
+            disable = self._db.disable_user(user_id=userId)
+            if disable == True:
+                return api_response(message="Correo desabilitado exitosamente")
+            return api_response(message="Error desabilitando usuario", status_code=400, detail='ERROR')
+        except Exception as e:
+            raise DatabaseError(f"Error al registrar en base de datos: {str(e)}")
+
+
+    async def enable_subscription(self, userId):
+        try:
+            enable = self._db.enable_user(user_id=userId)
+            if enable == True:
+                return api_response(message="Correo habilitado exitosamente")
+            return api_response(message="Error habilitando usuario", status_code=400, detail='ERROR')
+        except Exception as e:
+            raise DatabaseError(f"Error al registrar en base de datos: {str(e)}")
 
     async def send_email(self):
         pass

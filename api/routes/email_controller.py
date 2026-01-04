@@ -16,20 +16,26 @@ def get_email_service():
 #  >> Suscribir correo al servicio
 # --------------------------------------------------------------------------------------------
 
-@router.post("/suscribe", responses={
+@router.post("/subscribe", responses={
     200: {"description": "Usuario suscrito exitosamente para recibir alertas de juegos gratis."},
     500: {"description": "Error interno del servidor."}
 })
-async def suscribe(user: User, service: EmailService = Depends(get_email_service)):
-    return await service.suscribe_email(user)
+async def subscribe(user: User, service: EmailService = Depends(get_email_service)):
+    return await service.subscribe_email(user)
 
-@router.post("/unsubscribe", responses={
+@router.post("/disable", responses={
     200: {"description": "Suscripción cancelada exitosamente."},
     500: {"description": "Error interno del servidor."}
 })
-async def unsubscribe(userId: int, service: EmailService = Depends(get_email_service)):
-    return await service.unsuscribe_email(userId)
+async def disable_subscription(userId: int, service: EmailService = Depends(get_email_service)):
+    return await service.disable_subscription(userId)
 
+@router.post("/enable",  responses={
+    200: {"description": "Suscripción habilitada exitosamente."},
+    500: {"description": "Error interno del servidor."}
+})
+async def enable_subscription(userId: int, service: EmailService = Depends(get_email_service)):
+    return await service.enable_subscription(userId)
 
 @router.post("/send-email", responses={
     200: {"description": "Correo de alerta con las ofertas enviado exitosamente."},
